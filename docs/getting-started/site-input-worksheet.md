@@ -4,10 +4,9 @@ Collect these values before editing `config/stack.json`. Do not invent values me
 
 | Input | Where it comes from | Confirmed? |
 |---|---|---|
-| Elasticsearch FQDN | DNS/PKI team | [ ] |
-| Kibana FQDN | DNS/PKI team | [ ] |
-| Fleet Server FQDN | DNS/PKI team | [ ] |
+| RHEL VM FQDN (`hostname -f`) | Existing VM/DNS record | [ ] |
 | Credential-free proxy URL | Network team | [ ] |
+| Optional additional `NO_PROXY` suffixes | Network team/current approved host settings | [ ] |
 | Proxy CA chain | PKI/security team | [ ] |
 | Service CA chain | PKI team | [ ] |
 | Elasticsearch certificate/key | PKI team | [ ] |
@@ -25,4 +24,4 @@ The framework already defines:
 - Resource limits for the planned 8-vCPU/32-GiB VM.
 - PKI filenames under `/data/elk-poc/pki`.
 
-Run `bin/elkctl config-check` after entering the FQDNs and proxy URL. `PENDING` PKI files may be installed next; configuration failures must be corrected first.
+Run `bin/elkctl config-check` after entering the VM FQDN and proxy settings. `PENDING` PKI files may be installed next; configuration failures must be corrected first.

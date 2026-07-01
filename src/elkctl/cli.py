@@ -41,12 +41,12 @@ def config_check(config: StackConfig) -> int:
     system_version, journald_version = integration_versions(config)
     print(f"[PASS] Elastic Stack version: {STACK_VERSION}")
     print(f"[PASS] pinned integrations: System {system_version}, Journald {journald_version}")
-    for service, fqdn, port in (
-        ("Elasticsearch", config.services.elasticsearch, PORTS["elasticsearch"]),
-        ("Kibana", config.services.kibana, PORTS["kibana"]),
-        ("Fleet Server", config.services.fleet, PORTS["fleet"]),
+    for service, port in (
+        ("Elasticsearch", PORTS["elasticsearch"]),
+        ("Kibana", PORTS["kibana"]),
+        ("Fleet Server", PORTS["fleet"]),
     ):
-        print(f"[PASS] {service}: {fqdn}:{port}")
+        print(f"[PASS] {service}: {config.host_fqdn}:{port}")
     required = [
         config.service_ca,
         config.certificate("elasticsearch"),

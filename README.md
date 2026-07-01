@@ -49,7 +49,7 @@ Supporting guides:
 - SELinux enforcing.
 - `curl` and OpenSSL.
 - The planned VM profile: 8 vCPU, 32 GiB RAM, and at least 400 GiB free under `/data`.
-- Three corporate DNS aliases resolving to the VM.
+- The RHEL VM's existing fully qualified hostname, resolvable from operator workstations.
 - Corporate service certificates and the proxy interception CA.
 
 ## Minimal site configuration
@@ -61,23 +61,20 @@ cp config/stack.example.json config/stack.json
 vi config/stack.json
 ```
 
-Only three FQDNs and the proxy URL normally need to change:
+Only the VM FQDN and proxy settings normally need to change:
 
 ```json
 {
   "$schema": "./schema/stack.schema.json",
-  "services": {
-    "elasticsearchFqdn": "elasticsearch.corp.example",
-    "kibanaFqdn": "kibana.corp.example",
-    "fleetFqdn": "fleet.corp.example"
-  },
+  "hostFqdn": "servername.us.company.com",
   "proxy": {
-    "url": "http://proxy.corp.example:8080"
+    "url": "http://proxy.us.company.com:80",
+    "noProxy": [".company.com", ".local"]
   }
 }
 ```
 
-Set `proxy` to `null` only when the VM has approved direct access. Podman chooses the private container subnet automatically. Ports, images, memory ceilings, Fleet IDs, and integration versions are internal defaults.
+The same hostname serves Elasticsearch on 9200, Kibana on 5601, and Fleet Server on 8220. Set `proxy` to `null` only when the VM has approved direct access. Podman chooses the private container subnet automatically. Ports, images, memory ceilings, Fleet IDs, and integration versions are internal defaults.
 
 ## Required PKI filenames
 
@@ -94,7 +91,7 @@ fleet-server.crt
 fleet-server.key
 ```
 
-Elasticsearch uses its certificate for both HTTP and single-node transport TLS, so that certificate must permit both TLS server and client authentication. Private keys must be unencrypted PEM and mode `0600`.
+Each service certificate must contain the configured `hostFqdn` as a DNS SAN. Elasticsearch uses its certificate for both HTTP and single-node transport TLS, so that certificate must permit both TLS server and client authentication. Private keys must be unencrypted PEM and mode `0600`.
 
 ## Commands
 

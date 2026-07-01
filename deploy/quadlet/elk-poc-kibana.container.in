@@ -6,8 +6,9 @@ After=elk-poc-elasticsearch.service
 [Container]
 ContainerName=elk-poc-kibana
 Image=@@KIBANA_IMAGE@@
+HttpProxy=false
 Network=elk-poc.network
-NetworkAlias=@@KIBANA_FQDN@@
+AddHost=@@HOST_FQDN@@:host-gateway
 PublishPort=@@BIND_ADDRESS@@:@@KIBANA_PORT@@:5601
 Volume=@@RUNTIME_ROOT@@/config/kibana:/usr/share/kibana/config:Z
 Volume=@@RUNTIME_ROOT@@/pki/kibana:/usr/share/kibana/config/certs:ro,Z
@@ -15,6 +16,9 @@ Environment=NODE_EXTRA_CA_CERTS=/usr/share/kibana/config/certs/proxy-ca-chain.pe
 Environment=HTTP_PROXY=@@PROXY_URL@@
 Environment=HTTPS_PROXY=@@PROXY_URL@@
 Environment=NO_PROXY=@@NO_PROXY@@
+Environment=http_proxy=@@PROXY_URL@@
+Environment=https_proxy=@@PROXY_URL@@
+Environment=no_proxy=@@NO_PROXY@@
 Environment=TZ=UTC
 Memory=@@KIBANA_MEMORY@@
 LogDriver=journald

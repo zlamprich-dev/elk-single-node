@@ -27,12 +27,28 @@ Replace all `example.corp` values. Proxy credentials must never be embedded in t
 ## DNS fails
 
 ```bash
-getent ahosts <elasticsearch-fqdn>
-getent ahosts <kibana-fqdn>
-getent ahosts <fleet-fqdn>
+hostname -f
+getent ahosts <hostFqdn>
 ```
 
-All three names must resolve to the RHEL VM and match their certificate SANs.
+The configured hostname must resolve to the RHEL VM and appear in all three service certificates' SANs.
+
+## A container cannot reach the shared hostname
+
+The generated Kibana, Fleet Server, and Agent Quadlets contain:
+
+```text
+AddHost=<hostFqdn>:host-gateway
+```
+
+Inspect the rendered unit and the container's host mapping:
+
+```bash
+sudo grep AddHost runtime/config/elk-poc-*.container
+sudo podman exec elk-poc-kibana getent hosts <hostFqdn>
+```
+
+If Podman cannot determine `host-gateway`, review the rootful Podman network configuration with the RHEL administrator rather than substituting an invented static address.
 
 ## Registry or package access fails
 

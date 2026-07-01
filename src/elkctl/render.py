@@ -120,9 +120,7 @@ def render_configs(config: StackConfig) -> None:
     if config.proxy.url:
         registry_setting = f'xpack.fleet.registryProxyUrl: "{config.proxy.url}"'
     shared = {
-        "ELASTICSEARCH_FQDN": config.services.elasticsearch,
-        "KIBANA_FQDN": config.services.kibana,
-        "FLEET_FQDN": config.services.fleet,
+        "HOST_FQDN": config.host_fqdn,
         "ELASTICSEARCH_PORT": str(PORTS["elasticsearch"]),
         "KIBANA_PORT": str(PORTS["kibana"]),
         "FLEET_PORT": str(PORTS["fleet"]),
@@ -161,15 +159,10 @@ def render_configs(config: StackConfig) -> None:
 
 
 def render_quadlets(config: StackConfig) -> None:
-    bind_address = config.bind_address
-    if ":" in bind_address:
-        bind_address = f"[{bind_address}]"
     values = {
         "NETWORK_NAME": NETWORK_NAME,
-        "BIND_ADDRESS": bind_address,
-        "ELASTICSEARCH_FQDN": config.services.elasticsearch,
-        "KIBANA_FQDN": config.services.kibana,
-        "FLEET_FQDN": config.services.fleet,
+        "BIND_ADDRESS": "0.0.0.0",
+        "HOST_FQDN": config.host_fqdn,
         "ELASTICSEARCH_PORT": str(PORTS["elasticsearch"]),
         "KIBANA_PORT": str(PORTS["kibana"]),
         "FLEET_PORT": str(PORTS["fleet"]),

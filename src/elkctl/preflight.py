@@ -163,16 +163,20 @@ def _check_host(report: CheckReport, runner: CommandRunner, config: StackConfig)
 
 
 def _check_network(report: CheckReport, runner: CommandRunner, config: StackConfig) -> None:
-    for label, fqdn in (
-        ("Elasticsearch", config.services.elasticsearch),
-        ("Kibana", config.services.kibana),
-        ("Fleet Server", config.services.fleet),
-    ):
-        try:
-            addresses = sorted({item[4][0] for item in socket.getaddrinfo(fqdn, None)})
-            report.passed(f"{label} DNS resolves {fqdn} to {', '.join(addresses)}")
-        except socket.gaierror:
-            report.failed(f"{label} DNS does not resolve: {fqdn}")
+    try:
+        address_info = socket.getaddrinfo(config.host_fqdn, None)
+        addresses = sorted({item[4][0] for item in address_info})
+        report.passed(
+            f"stack hostname resolves {config.host_fqdn} to {', '.join(addresses)}"
+        )
+        if any(item[0] == socket.AF_INET for item in address_info):
+            report.passed("stack hostname has an IPv4 address for published POC ports")
+        else:
+            report.failed(
+                "stack hostname has no IPv4 address; this POC publishes services on IPv4"
+            )
+    except socket.gaierror:
+        report.failed(f"stack hostname does not resolve: {config.host_fqdn}")
     units = {
         "elasticsearch": "elk-poc-elasticsearch.service",
         "kibana": "elk-poc-kibana.service",
@@ -262,11 +266,7 @@ def run_preflight(config: StackConfig, runner: CommandRunner) -> CheckReport:
         return report
     _check_host(report, runner, config)
     _check_network(report, runner, config)
-    for service, fqdn in (
-        ("elasticsearch", config.services.elasticsearch),
-        ("kibana", config.services.kibana),
-        ("fleet", config.services.fleet),
-    ):
+    for service in ("elasticsearch", "kibana", "fleet"):
         key = config.private_key(service)
         if key.exists() and key.stat().st_mode & 0o077:
             report.failed(f"private key must use mode 0600 or stricter: {key}")
@@ -276,7 +276,7 @@ def run_preflight(config: StackConfig, runner: CommandRunner) -> CheckReport:
             label=service.title(),
             certificate=config.certificate(service),
             private_key=key,
-            fqdn=fqdn,
+            fqdn=config.host_fqdn,
             ca_file=config.service_ca,
             require_client_auth=service == "elasticsearch",
         )

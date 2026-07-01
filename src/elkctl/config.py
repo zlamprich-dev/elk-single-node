@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import ipaddress
 import json
 import os
 from pathlib import Path
@@ -19,13 +18,6 @@ FQDN_PATTERN = re.compile(
 
 
 @dataclass(frozen=True)
-class ServiceNames:
-    elasticsearch: str
-    kibana: str
-    fleet: str
-
-
-@dataclass(frozen=True)
 class ProxyConfig:
     url: str | None
     no_proxy: tuple[str, ...] = ()
@@ -39,9 +31,8 @@ class ProxyConfig:
 class StackConfig:
     repo_root: Path
     source: Path
-    services: ServiceNames
+    host_fqdn: str
     proxy: ProxyConfig
-    bind_address: str = "0.0.0.0"
 
     @property
     def runtime_root(self) -> Path:
@@ -80,17 +71,14 @@ class StackConfig:
         return self.pki_root / filename
 
     def url(self, service: str) -> str:
-        host = getattr(self.services, service)
-        return f"https://{host}:{PORTS[service]}"
+        return f"https://{self.host_fqdn}:{PORTS[service]}"
 
     def no_proxy_value(self) -> str:
         values = {
             "localhost",
             "127.0.0.1",
             "::1",
-            self.services.elasticsearch,
-            self.services.kibana,
-            self.services.fleet,
+            self.host_fqdn,
             *self.proxy.no_proxy,
         }
         return ",".join(sorted(values))
@@ -190,39 +178,24 @@ def load_config(
     except (OSError, json.JSONDecodeError) as exc:
         raise ConfigurationError(f"configuration is not valid JSON: {selected}: {exc}") from exc
     root_object = _require_object(raw, "configuration")
-    _reject_unknown(root_object, {"$schema", "services", "proxy", "bindAddress"}, "configuration")
+    if "services" in root_object and "hostFqdn" not in root_object:
+        raise ConfigurationError(
+            "configuration uses the retired services block; replace it with "
+            '"hostFqdn": "servername.example.corp"'
+        )
+    _reject_unknown(root_object, {"$schema", "hostFqdn", "proxy"}, "configuration")
     if "proxy" not in root_object:
         raise ConfigurationError(
             "configuration.proxy is required; use null for approved direct access"
         )
-    services = _require_object(root_object.get("services"), "services")
-    _reject_unknown(services, {"elasticsearchFqdn", "kibanaFqdn", "fleetFqdn"}, "services")
-    names = ServiceNames(
-        elasticsearch=_require_fqdn(
-            services.get("elasticsearchFqdn"),
-            "services.elasticsearchFqdn",
-            allow_examples=allow_examples,
-        ),
-        kibana=_require_fqdn(
-            services.get("kibanaFqdn"), "services.kibanaFqdn", allow_examples=allow_examples
-        ),
-        fleet=_require_fqdn(
-            services.get("fleetFqdn"), "services.fleetFqdn", allow_examples=allow_examples
-        ),
+    host_fqdn = _require_fqdn(
+        root_object.get("hostFqdn"), "hostFqdn", allow_examples=allow_examples
     )
-    if len({names.elasticsearch, names.kibana, names.fleet}) != 3:
-        raise ConfigurationError("the three service FQDNs must be distinct")
-    bind_address = root_object.get("bindAddress", "0.0.0.0")
-    try:
-        ipaddress.ip_address(bind_address)
-    except (TypeError, ValueError) as exc:
-        raise ConfigurationError("bindAddress must be an IPv4 or IPv6 address") from exc
     return StackConfig(
         repo_root=root,
         source=selected.resolve(),
-        services=names,
+        host_fqdn=host_fqdn,
         proxy=_parse_proxy(root_object.get("proxy"), allow_examples=allow_examples),
-        bind_address=str(bind_address),
     )
 
 

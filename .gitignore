@@ -1,0 +1,19 @@
+# Local operator inputs and generated deployment state
+config/stack.json
+config/stack.json.*
+pki/
+secrets/
+runtime/
+
+# Python-generated files
+__pycache__/
+*.py[cod]
+.venv/
+.coverage
+htmlcov/
+
+# Local editor and operating-system files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

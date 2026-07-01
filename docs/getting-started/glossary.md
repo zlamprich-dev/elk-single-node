@@ -22,7 +22,7 @@ The Kibana application used to define Agent policies, integrations, enrollment t
 The service through which enrolled Agents receive policy and report status. Agents connect to it on HTTPS port 8220.
 
 **FQDN (Fully Qualified Domain Name)**  
-A complete DNS name such as `kibana.example.corp`. It must match the relevant certificate SAN.
+A complete DNS name such as `servername.us.company.com`. This POC uses the VM FQDN for all three HTTPS services, distinguished by port, and requires it in every service certificate SAN.
 
 **Integration**  
 A versioned Elastic package containing Agent inputs, ingest pipelines, mappings, and dashboards for a data source.

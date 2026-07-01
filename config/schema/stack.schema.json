@@ -3,18 +3,12 @@
   "title": "Minimal Elastic Stack POC site configuration",
   "type": "object",
   "additionalProperties": false,
-  "required": ["services", "proxy"],
+  "required": ["hostFqdn", "proxy"],
   "properties": {
     "$schema": { "type": "string" },
-    "services": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["elasticsearchFqdn", "kibanaFqdn", "fleetFqdn"],
-      "properties": {
-        "elasticsearchFqdn": { "$ref": "#/$defs/fqdn" },
-        "kibanaFqdn": { "$ref": "#/$defs/fqdn" },
-        "fleetFqdn": { "$ref": "#/$defs/fqdn" }
-      }
+    "hostFqdn": {
+      "allOf": [{ "$ref": "#/$defs/fqdn" }],
+      "description": "Existing RHEL VM FQDN shared by Elasticsearch, Kibana, and Fleet Server"
     },
     "proxy": {
       "oneOf": [
@@ -31,15 +25,12 @@
             "noProxy": {
               "type": "array",
               "items": { "type": "string", "minLength": 1 },
-              "uniqueItems": true
+              "uniqueItems": true,
+              "description": "Optional additional hosts, domain suffixes, IPs, or CIDRs that bypass the proxy"
             }
           }
         }
       ]
-    },
-    "bindAddress": {
-      "type": "string",
-      "description": "Optional host address for published ports; defaults to 0.0.0.0"
     }
   },
   "$defs": {

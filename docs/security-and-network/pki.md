@@ -13,9 +13,11 @@ Request separate leaf certificates for:
 
 | Service | Required SAN | Required EKU |
 |---|---|---|
-| Elasticsearch | Exact `services.elasticsearchFqdn` | `serverAuth` and `clientAuth` because the current single certificate is also used for transport mTLS |
-| Kibana | Exact `services.kibanaFqdn` | `serverAuth` |
-| Fleet Server | Exact `services.fleetFqdn` | `serverAuth` |
+| Elasticsearch | Exact `hostFqdn` | `serverAuth` and `clientAuth` because the current single certificate is also used for transport mTLS |
+| Kibana | Exact `hostFqdn` | `serverAuth` |
+| Fleet Server | Exact `hostFqdn` | `serverAuth` |
+
+All three certificates contain the same DNS SAN because the services share the VM hostname and use different ports. Separate certificates and private keys are still preferred so compromise of one service key does not expose the others.
 
 Do not rely only on a certificate Common Name. Modern hostname verification uses Subject Alternative Names.
 
@@ -37,7 +39,7 @@ Set local shell variables to the actual files and FQDN:
 CERT=/data/elk-poc/pki/elasticsearch.crt
 KEY=/data/elk-poc/pki/elasticsearch.key
 CA=/data/elk-poc/pki/service-ca-chain.pem
-FQDN=elasticsearch.example.corp
+FQDN=servername.us.company.com
 ```
 
 Replace the example FQDN, then run:
@@ -91,13 +93,13 @@ Use `openssl s_client` after deployment:
 
 ```bash
 openssl s_client \
-  -connect elasticsearch.example.corp:9200 \
-  -servername elasticsearch.example.corp \
+  -connect servername.us.company.com:9200 \
+  -servername servername.us.company.com \
   -CAfile /data/elk-poc/pki/service-ca-chain.pem \
   -verify_return_error </dev/null
 ```
 
-Replace both example names. A successful handshake must end with `Verify return code: 0 (ok)`.
+Replace both example names with `hostFqdn`. A successful handshake must end with `Verify return code: 0 (ok)`.
 
 ## Renewal procedure
 

@@ -21,9 +21,9 @@ cd /data/elk-poc
 chmod +x bin/elkctl tests/run.sh deploy/scripts/agent-secret-entrypoint.sh
 ```
 
-## 3. Enter the four site values
+## 3. Enter the site configuration
 
-Complete the [site input worksheet](site-input-worksheet.md), then:
+Complete the [site input worksheet](site-input-worksheet.md). For a new deployment, create the local configuration:
 
 ```bash
 cp config/stack.example.json config/stack.json
@@ -32,6 +32,15 @@ bin/elkctl config-check
 ```
 
 Expected: configuration passes and only not-yet-installed PKI files are `PENDING`.
+
+If this checkout previously used a `services` block containing three FQDNs, do not run the preceding copy command first. `git pull` does not replace the ignored `config/stack.json`. Back it up, copy the new example, and enter the VM hostname and proxy again:
+
+```bash
+cp config/stack.json config/stack.json.before-host-fqdn
+cp config/stack.example.json config/stack.json
+vi config/stack.json
+bin/elkctl config-check
+```
 
 ## 4. Install the PKI files
 
@@ -73,7 +82,7 @@ Deployment starts Elasticsearch, Kibana, Fleet Server, and the local Agent in de
 sudo bin/elkctl status
 ```
 
-Browse to `https://<kibana-fqdn>:5601`. Use the initial administrator password stored in `secrets/elastic-password` only through an approved handling method.
+Browse to `https://<hostFqdn>:5601`. Use the initial administrator password stored in `secrets/elastic-password` only through an approved handling method.
 
 In Kibana:
 

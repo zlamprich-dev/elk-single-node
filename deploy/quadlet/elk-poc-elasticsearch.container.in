@@ -6,8 +6,8 @@ After=network-online.target
 [Container]
 ContainerName=elk-poc-elasticsearch
 Image=@@ELASTICSEARCH_IMAGE@@
+HttpProxy=false
 Network=elk-poc.network
-NetworkAlias=@@ELASTICSEARCH_FQDN@@
 PublishPort=@@BIND_ADDRESS@@:@@ELASTICSEARCH_PORT@@:9200
 Volume=@@RUNTIME_ROOT@@/config/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,Z
 Volume=@@RUNTIME_ROOT@@/config/elasticsearch/elasticsearch.keystore:/usr/share/elasticsearch/config/elasticsearch.keystore:Z

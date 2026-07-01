@@ -33,19 +33,15 @@ class ConfigTest(unittest.TestCase):
 
     def valid(self) -> dict:
         return {
-            "services": {
-                "elasticsearchFqdn": "es.test.internal",
-                "kibanaFqdn": "kibana.test.internal",
-                "fleetFqdn": "fleet.test.internal",
-            },
+            "hostFqdn": "server.test.internal",
             "proxy": {"url": "http://proxy.test.internal:8080"},
         }
 
     def test_minimal_configuration_loads_with_defaults(self) -> None:
         config = load_config(self.write(self.valid()), repo_root=self.root)
-        self.assertEqual(config.bind_address, "0.0.0.0")
-        self.assertEqual(config.url("kibana"), "https://kibana.test.internal:5601")
-        self.assertIn("es.test.internal", config.no_proxy_value())
+        self.assertEqual(config.host_fqdn, "server.test.internal")
+        self.assertEqual(config.url("kibana"), "https://server.test.internal:5601")
+        self.assertIn("server.test.internal", config.no_proxy_value())
 
     def test_proxy_may_be_disabled(self) -> None:
         value = self.valid()
@@ -61,7 +57,7 @@ class ConfigTest(unittest.TestCase):
 
     def test_example_placeholder_is_rejected(self) -> None:
         value = self.valid()
-        value["services"]["fleetFqdn"] = "fleet.example.corp"
+        value["hostFqdn"] = "server.example.corp"
         with self.assertRaisesRegex(ConfigurationError, "placeholder"):
             load_config(self.write(value), repo_root=self.root)
 
@@ -83,22 +79,21 @@ class ConfigTest(unittest.TestCase):
         with self.assertRaisesRegex(ConfigurationError, "individual hostnames"):
             load_config(self.write(value), repo_root=self.root)
 
-    def test_invalid_bind_address_is_configuration_error(self) -> None:
-        value = self.valid()
-        value["bindAddress"] = None
-        with self.assertRaisesRegex(ConfigurationError, "IPv4 or IPv6"):
-            load_config(self.write(value), repo_root=self.root)
-
     def test_invalid_proxy_port_is_rejected(self) -> None:
         value = self.valid()
         value["proxy"]["url"] = "http://proxy.test.internal:not-a-port"
         with self.assertRaisesRegex(ConfigurationError, "invalid port"):
             load_config(self.write(value), repo_root=self.root)
 
-    def test_duplicate_service_names_are_rejected(self) -> None:
+    def test_retired_services_block_has_migration_message(self) -> None:
         value = self.valid()
-        value["services"]["fleetFqdn"] = value["services"]["kibanaFqdn"]
-        with self.assertRaisesRegex(ConfigurationError, "must be distinct"):
+        value.pop("hostFqdn")
+        value["services"] = {
+            "elasticsearchFqdn": "es.test.internal",
+            "kibanaFqdn": "kibana.test.internal",
+            "fleetFqdn": "fleet.test.internal",
+        }
+        with self.assertRaisesRegex(ConfigurationError, "retired services block"):
             load_config(self.write(value), repo_root=self.root)
 
 

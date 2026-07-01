@@ -29,9 +29,7 @@ class RenderTest(unittest.TestCase):
         values = {
             "NETWORK_NAME": "elk-poc",
             "BIND_ADDRESS": "0.0.0.0",
-            "ELASTICSEARCH_FQDN": "es.test.internal",
-            "KIBANA_FQDN": "kibana.test.internal",
-            "FLEET_FQDN": "fleet.test.internal",
+            "HOST_FQDN": "server.test.internal",
             "ELASTICSEARCH_PORT": "9200",
             "KIBANA_PORT": "5601",
             "FLEET_PORT": "8220",
@@ -53,12 +51,23 @@ class RenderTest(unittest.TestCase):
             "REGISTRY_PROXY_SETTING": "",
             "PROXY_URL": "http://proxy.test.internal:8080",
             "PROXY_CA_ENV": "Environment=SSL_CERT_FILE=/etc/elk-pki/proxy-ca-chain.pem",
-            "NO_PROXY": "localhost,es.test.internal,kibana.test.internal,fleet.test.internal",
+            "NO_PROXY": "localhost,server.test.internal",
         }
         for path in (root / "deploy").rglob("*.in"):
             rendered = render_text(path.read_text(encoding="utf-8"), values)
             if path.name.endswith(".json.in"):
                 json.loads(rendered)
+
+    def test_quadlets_use_one_host_name_without_shared_network_alias(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        content = "\n".join(
+            path.read_text(encoding="utf-8")
+            for path in (root / "deploy" / "quadlet").glob("*.in")
+        )
+        self.assertNotIn("NetworkAlias=@@HOST_FQDN@@", content)
+        self.assertEqual(content.count("AddHost=@@HOST_FQDN@@:host-gateway"), 3)
+        self.assertEqual(content.count("HttpProxy=false"), 4)
+        self.assertEqual(content.count("Environment=no_proxy=@@NO_PROXY@@"), 3)
 
 
 if __name__ == "__main__":

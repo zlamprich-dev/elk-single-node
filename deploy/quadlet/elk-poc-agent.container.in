@@ -6,8 +6,10 @@ After=elk-poc-fleet-server.service
 [Container]
 ContainerName=elk-poc-agent
 Image=@@MONITORING_AGENT_IMAGE@@
+HttpProxy=false
 User=0
 Network=elk-poc.network
+AddHost=@@HOST_FQDN@@:host-gateway
 Volume=@@RUNTIME_ROOT@@/pki/agent:/etc/elk-pki:ro,Z
 Volume=@@RUNTIME_ROOT@@/config/agent-secret-entrypoint.sh:/usr/local/bin/elk-agent-secret-entrypoint:ro,Z
 Volume=@@RUNTIME_ROOT@@/data/agent:/state:Z
@@ -20,7 +22,7 @@ Volume=/run/log/journal:/hostfs/run/log/journal:ro,rslave
 Secret=elk_poc_local_enrollment_token,type=mount,target=enrollment_token
 Entrypoint=/usr/local/bin/elk-agent-secret-entrypoint
 Environment=FLEET_ENROLL=1
-Environment=FLEET_URL=https://@@FLEET_FQDN@@:@@FLEET_PORT@@
+Environment=FLEET_URL=https://@@HOST_FQDN@@:@@FLEET_PORT@@
 Environment=FLEET_CA=/etc/elk-pki/service-ca-chain.pem
 Environment=STATE_PATH=/state
 Environment=HOSTFS=/hostfs
@@ -28,6 +30,9 @@ Environment=HOSTFS=/hostfs
 Environment=HTTP_PROXY=@@PROXY_URL@@
 Environment=HTTPS_PROXY=@@PROXY_URL@@
 Environment=NO_PROXY=@@NO_PROXY@@
+Environment=http_proxy=@@PROXY_URL@@
+Environment=https_proxy=@@PROXY_URL@@
+Environment=no_proxy=@@NO_PROXY@@
 Environment=TZ=UTC
 Memory=@@AGENT_MEMORY@@
 LogDriver=journald
