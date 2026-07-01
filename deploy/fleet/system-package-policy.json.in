@@ -1,0 +1,33 @@
+{
+  "id": "elk-poc-local-system",
+  "name": "ELK POC local system telemetry",
+  "description": "Framework-managed host metrics and RHEL log files through /hostfs.",
+  "namespace": "@@FLEET_NAMESPACE@@",
+  "policy_ids": ["@@LOCAL_AGENT_POLICY_ID@@"],
+  "package": { "name": "system", "version": "@@SYSTEM_PACKAGE_VERSION@@" },
+  "inputs": {
+    "system-system/metrics": {
+      "enabled": true,
+      "vars": { "[system.hostfs]": "/hostfs" },
+      "streams": {
+        "[system.core]": { "enabled": true, "vars": { "period": "10s" } },
+        "[system.cpu]": { "enabled": true, "vars": { "period": "10s" } },
+        "[system.diskio]": { "enabled": true, "vars": { "period": "10s" } },
+        "[system.filesystem]": { "enabled": true, "vars": { "period": "1m" } },
+        "[system.fsstat]": { "enabled": true, "vars": { "period": "1m" } },
+        "[system.load]": { "enabled": true, "vars": { "period": "10s" } },
+        "[system.memory]": { "enabled": true, "vars": { "period": "10s" } },
+        "[system.network]": { "enabled": true, "vars": { "period": "10s" } },
+        "[system.process.summary]": { "enabled": true, "vars": { "period": "10s" } },
+        "[system.uptime]": { "enabled": true, "vars": { "period": "10s" } }
+      }
+    },
+    "system-system/logs": {
+      "enabled": true,
+      "streams": {
+        "[system.auth]": { "enabled": true, "vars": { "paths": ["/hostfs/var/log/secure*"] } },
+        "[system.syslog]": { "enabled": true, "vars": { "paths": ["/hostfs/var/log/messages*"] } }
+      }
+    }
+  }
+}

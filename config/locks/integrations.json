@@ -1,0 +1,9 @@
+{
+  "kibanaVersion": "9.4.2",
+  "resolvedAt": "2026-06-29",
+  "packages": {
+    "system": "2.20.0",
+    "journald": "1.2.1"
+  },
+  "source": "https://epr.elastic.co/search?package=system&kibana.version=9.4.2"
+}

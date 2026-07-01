@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Minimal Elastic Stack POC site configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["services", "proxy"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "services": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["elasticsearchFqdn", "kibanaFqdn", "fleetFqdn"],
+      "properties": {
+        "elasticsearchFqdn": { "$ref": "#/$defs/fqdn" },
+        "kibanaFqdn": { "$ref": "#/$defs/fqdn" },
+        "fleetFqdn": { "$ref": "#/$defs/fqdn" }
+      }
+    },
+    "proxy": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["url"],
+          "properties": {
+            "url": {
+              "type": ["string", "null"],
+              "description": "Credential-free HTTP(S) proxy origin, for example http://proxy.corp.example:8080"
+            },
+            "noProxy": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "uniqueItems": true
+            }
+          }
+        }
+      ]
+    },
+    "bindAddress": {
+      "type": "string",
+      "description": "Optional host address for published ports; defaults to 0.0.0.0"
+    }
+  },
+  "$defs": {
+    "fqdn": {
+      "type": "string",
+      "pattern": "^(?=.{1,253}$)([A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z0-9][A-Za-z0-9-]{0,62}$"
+    }
+  }
+}

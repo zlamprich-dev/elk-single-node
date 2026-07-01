@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+set -eu
+
+REPO_ROOT="$(cd -- "${0%/*}/.." && pwd -P)"
+PYTHON_BIN="${ELK_PYTHON:-python3.13}"
+
+if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
+  printf '[elkctl] ERROR: Python 3.13 is required. Install the approved Python 3.13 package from Enterprise Software Center.\n' >&2
+  exit 1
+fi
+
+export PYTHONPATH="$REPO_ROOT/src"
+exec "$PYTHON_BIN" -m elkctl "$@"

@@ -1,0 +1,54 @@
+server.name: elk-poc-kibana
+server.host: 0.0.0.0
+server.port: 5601
+server.publicBaseUrl: "https://@@KIBANA_FQDN@@:@@KIBANA_PORT@@"
+server.ssl.enabled: true
+server.ssl.certificate: /usr/share/kibana/config/certs/kibana.crt
+server.ssl.key: /usr/share/kibana/config/certs/kibana.key
+elasticsearch.hosts: ["https://@@ELASTICSEARCH_FQDN@@:@@ELASTICSEARCH_PORT@@"]
+elasticsearch.ssl.certificateAuthorities: ["/usr/share/kibana/config/certs/service-ca-chain.pem"]
+elasticsearch.ssl.verificationMode: full
+telemetry.optIn: false
+telemetry.allowChangingOptInStatus: false
+xpack.security.secureCookies: true
+xpack.security.sameSiteCookies: Lax
+xpack.fleet.agents.enabled: true
+xpack.fleet.fleetServerHosts:
+  - id: elk-poc-fleet-host
+    name: ELK POC Fleet Server
+    host_urls: ["https://@@FLEET_FQDN@@:@@FLEET_PORT@@"]
+xpack.fleet.outputs:
+  - id: elk-poc-elasticsearch-output
+    name: ELK POC Elasticsearch
+    type: elasticsearch
+    hosts: ["https://@@ELASTICSEARCH_FQDN@@:@@ELASTICSEARCH_PORT@@"]
+    is_default: true
+    is_default_monitoring: true
+    ssl:
+      certificate_authorities:
+        - |
+@@CA_CHAIN_YAML@@
+xpack.fleet.packages:
+  - name: system
+    version: "@@SYSTEM_PACKAGE_VERSION@@"
+  - name: journald
+    version: "@@JOURNALD_PACKAGE_VERSION@@"
+xpack.fleet.agentPolicies:
+  - id: "@@FLEET_SERVER_POLICY_ID@@"
+    name: "ELK POC Fleet Server"
+    namespace: "@@FLEET_NAMESPACE@@"
+    monitoring_enabled: [logs, metrics]
+    is_managed: true
+    is_default_fleet_server: true
+    data_output_id: elk-poc-elasticsearch-output
+    monitoring_output_id: elk-poc-elasticsearch-output
+    fleet_server_host_id: elk-poc-fleet-host
+  - id: "@@LOCAL_AGENT_POLICY_ID@@"
+    name: "ELK POC Local RHEL"
+    namespace: "@@FLEET_NAMESPACE@@"
+    monitoring_enabled: [logs, metrics]
+    is_managed: false
+    data_output_id: elk-poc-elasticsearch-output
+    monitoring_output_id: elk-poc-elasticsearch-output
+    fleet_server_host_id: elk-poc-fleet-host
+@@REGISTRY_PROXY_SETTING@@

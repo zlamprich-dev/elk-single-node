@@ -1,0 +1,5 @@
+[Unit]
+Description=ELK POC private network
+
+[Network]
+NetworkName=@@NETWORK_NAME@@

@@ -1,0 +1,11 @@
+{
+  "$schema": "./schema/stack.schema.json",
+  "services": {
+    "elasticsearchFqdn": "elasticsearch.example.corp",
+    "kibanaFqdn": "kibana.example.corp",
+    "fleetFqdn": "fleet.example.corp"
+  },
+  "proxy": {
+    "url": "http://proxy.example.corp:8080"
+  }
+}

@@ -1,0 +1,22 @@
+cluster.name: elk-poc
+node.name: elk-poc-single-node
+discovery.type: single-node
+network.host: 0.0.0.0
+http.port: 9200
+bootstrap.memory_lock: true
+path.data: /usr/share/elasticsearch/data
+path.logs: /usr/share/elasticsearch/logs
+xpack.license.self_generated.type: basic
+xpack.security.enabled: true
+xpack.security.http.ssl:
+  enabled: true
+  certificate_authorities: ["/usr/share/elasticsearch/config/certs/service-ca-chain.pem"]
+  certificate: /usr/share/elasticsearch/config/certs/elasticsearch.crt
+  key: /usr/share/elasticsearch/config/certs/elasticsearch.key
+xpack.security.transport.ssl:
+  enabled: true
+  verification_mode: certificate
+  client_authentication: required
+  certificate_authorities: ["/usr/share/elasticsearch/config/certs/service-ca-chain.pem"]
+  certificate: /usr/share/elasticsearch/config/certs/elasticsearch.crt
+  key: /usr/share/elasticsearch/config/certs/elasticsearch.key

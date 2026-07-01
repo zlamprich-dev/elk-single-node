@@ -1,0 +1,22 @@
+{
+  "id": "elk-poc-local-journald",
+  "name": "ELK POC local journald telemetry",
+  "description": "Framework-managed RHEL and Podman journal collection without the Podman API socket.",
+  "namespace": "@@FLEET_NAMESPACE@@",
+  "policy_ids": ["@@LOCAL_AGENT_POLICY_ID@@"],
+  "package": { "name": "journald", "version": "@@JOURNALD_PACKAGE_VERSION@@" },
+  "inputs": {
+    "journald-journald": {
+      "enabled": true,
+      "streams": {
+        "[journald.logs]": {
+          "enabled": true,
+          "vars": {
+            "paths": ["/hostfs/var/log/journal", "/hostfs/run/log/journal"],
+            "include_matches.match": []
+          }
+        }
+      }
+    }
+  }
+}
