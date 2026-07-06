@@ -213,7 +213,21 @@ class SafetyTest(unittest.TestCase):
         self.assertEqual(len(secret_lines), 3)
         self.assertTrue(all("mode=0400" in line for line in secret_lines))
         elasticsearch = next(line for line in secret_lines if "elastic_password" in line)
+        fleet = next(line for line in secret_lines if "fleet_service_token" in line)
+        agent = next(line for line in secret_lines if "enrollment_token" in line)
         self.assertIn("uid=1000", elasticsearch)
+        self.assertIn("uid=1000,gid=1000", fleet)
+        self.assertIn("uid=0,gid=0", agent)
+
+    def test_fleet_server_runs_as_the_image_non_root_user(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        quadlet = (
+            root / "deploy" / "quadlet" / "elk-poc-fleet-server.container.in"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("User=1000:1000", quadlet)
+        self.assertNotIn("AddCapability=CHOWN", quadlet)
+        self.assertNotIn("AddCapability=DAC_OVERRIDE", quadlet)
 
     def test_elasticsearch_keystore_is_not_directly_bind_mounted(self) -> None:
         root = Path(__file__).resolve().parents[1]

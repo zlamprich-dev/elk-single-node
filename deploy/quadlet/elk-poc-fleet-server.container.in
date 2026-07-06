@@ -7,12 +7,13 @@ After=elk-poc-elasticsearch.service elk-poc-kibana.service
 ContainerName=elk-poc-fleet-server
 Image=@@FLEET_SERVER_IMAGE@@
 HttpProxy=false
+User=1000:1000
 Network=elk-poc.network
 AddHost=@@HOST_FQDN@@:host-gateway
 PublishPort=@@BIND_ADDRESS@@:@@FLEET_PORT@@:8220
 Volume=@@RUNTIME_ROOT@@/pki/fleet:/etc/elk-pki:ro,Z
 Volume=@@RUNTIME_ROOT@@/data/fleet-server:/state:Z
-Secret=elk_poc_fleet_service_token,type=mount,target=fleet_service_token,uid=0,gid=0,mode=0400
+Secret=elk_poc_fleet_service_token,type=mount,target=fleet_service_token,uid=1000,gid=1000,mode=0400
 Environment=FLEET_SERVER_ENABLE=1
 Environment=FLEET_SERVER_POLICY_ID=@@FLEET_SERVER_POLICY_ID@@
 Environment=FLEET_SERVER_ELASTICSEARCH_HOST=https://@@HOST_FQDN@@:@@ELASTICSEARCH_PORT@@

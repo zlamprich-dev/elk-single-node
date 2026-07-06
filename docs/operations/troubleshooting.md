@@ -189,6 +189,24 @@ the corrected repository, and rerun deployment. The Podman secret itself does
 not need to be deleted or recreated because ownership and mode are consumer
 mount options in the Quadlet definition.
 
+## Fleet Server cannot open `/run/secrets/fleet_service_token`
+
+Elastic Agent 9.4.2 container images run as the non-root `elastic-agent` user,
+UID/GID `1000:1000`, by default. A Fleet service token mounted for UID 0 with
+mode `0400` is therefore intentionally unreadable to Fleet Server.
+
+The Fleet Server Quadlet now explicitly runs as `1000:1000` and mounts only its
+service token for that same UID/GID with mode `0400`. The controller already
+makes its persistent state directory writable by UID 1000. A warning that the
+non-root process cannot chown Agent paths can appear during startup; it is not
+fatal when `/state` has the correct ownership. Do not grant `CAP_CHOWN`,
+`CAP_DAC_OVERRIDE`, privileged mode, or broader secret permissions to suppress
+the warning.
+
+Pull the correction and rerun `sudo bin/elkctl deploy`. Podman applies secret
+ownership at mount time, so the existing protected service-token file and
+Podman secret do not need to be deleted or regenerated.
+
 ## Elasticsearch reports `elasticsearch.keystore: Device or resource busy`
 
 Elasticsearch updates its keystore by creating `elasticsearch.keystore.tmp` and
