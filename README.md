@@ -48,7 +48,7 @@ Supporting guides:
 - No third-party Python packages; do not run `pip install` for this project.
 - SELinux enforcing.
 - `curl` and OpenSSL.
-- The planned VM profile: 8 vCPU, 32 GiB RAM, and at least 400 GiB free under `/data`.
+- The planned POC VM profile: 8 vCPU, 24 GiB RAM, and at least 100 GiB free under `/data`.
 - The RHEL VM's existing fully qualified hostname, resolvable from operator workstations.
 - Corporate service certificates and the proxy interception CA.
 

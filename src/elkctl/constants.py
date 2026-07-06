@@ -25,15 +25,15 @@ IMAGES = {
 }
 
 MEMORY_LIMITS = {
-    "elasticsearch": "20G",
-    "kibana": "4G",
+    "elasticsearch": "12G",
+    "kibana": "3G",
     "fleet": "2G",
     "agent": "2G",
 }
 
 MINIMUM_CPU = 8
-MINIMUM_MEMORY_GIB = 32
-MINIMUM_FREE_DISK_GIB = 400
+MINIMUM_MEMORY_GIB = 24
+MINIMUM_FREE_DISK_GIB = 100
 MINIMUM_CERTIFICATE_VALIDITY_DAYS = 30
 
 SERVICES = (
@@ -47,4 +47,3 @@ SERVICES = (
 def repository_root() -> Path:
     """Return the repository root, whether run from source or through bin/elkctl."""
     return Path(__file__).resolve().parents[2]
-

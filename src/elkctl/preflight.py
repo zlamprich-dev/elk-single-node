@@ -223,8 +223,12 @@ def _check_supply_chain(report: CheckReport, runner: CommandRunner, config: Stac
         report.passed("Elastic Package Registry is reachable")
     else:
         report.failed("Elastic Package Registry is unreachable through the configured proxy/trust")
+    artifact_url = (
+        "https://artifacts.elastic.co/downloads/beats/elastic-agent/"
+        f"elastic-agent-{STACK_VERSION}-linux-x86_64.tar.gz.sha512"
+    )
     artifacts = runner.run(
-        [*curl_common, "--head", "https://artifacts.elastic.co/downloads/"],
+        [*curl_common, "--output", "/dev/null", artifact_url],
         check=False,
         env=env,
     )

@@ -58,6 +58,102 @@ Confirm the proxy URL, install the proxy interception CA through the approved RH
 
 Use the [PKI guide](../security-and-network/pki.md). Common causes are a missing intermediate, wrong SAN, mismatched key, expired certificate, or missing client-authentication EKU on the Elasticsearch certificate.
 
+## Common preflight findings
+
+Do not deploy while preflight reports failures. Warnings require review but do not, by themselves, prevent deployment.
+
+### SELinux is permissive
+
+This framework requires SELinux to remain enforcing. When policy is loaded but the current mode is `Permissive`, inspect and enable it with:
+
+```bash
+getenforce
+sestatus
+grep '^SELINUX=' /etc/selinux/config
+sudo setenforce 1
+getenforce
+sudoedit /etc/selinux/config
+```
+
+Set `SELINUX=enforcing` in `/etc/selinux/config`; do not change `SELINUXTYPE`. If corporate policy prevents this change, stop and contact the RHEL or security owner. After attempting deployment, inspect denials with:
+
+```bash
+sudo ausearch -m AVC,USER_AVC -ts recent
+```
+
+Do not disable SELinux to work around a container error.
+
+### A required port is already occupied
+
+Identify the listener before stopping anything. For Fleet Server port 8220:
+
+```bash
+sudo ss -ltnp 'sport = :8220'
+sudo podman ps --format 'table {{.ID}}\t{{.Names}}\t{{.Ports}}\t{{.Status}}'
+sudo systemctl list-units --type=service --all | grep -Ei 'elastic|fleet|podman'
+```
+
+Inspect the reported process, unit, or container. Stop it only after confirming that it is an obsolete deployment. Do not kill an unidentified process. Rerun the `ss` command; no output means the port is available.
+
+### The VM reports insufficient memory or disk
+
+The default POC profile requires 8 logical CPUs, 24 GiB RAM, and 100 GiB free on the filesystem containing `/data/elk-poc`. Its container memory ceilings total 19 GiB: 12 GiB for Elasticsearch, 3 GiB for Kibana, and 2 GiB each for Fleet Server and the monitoring Agent. The remaining memory is reserved for RHEL, Podman, and filesystem cache.
+
+Do not lower these checks merely to make preflight pass. Increase the VM resources or reduce the workload only after measuring actual use. Check current capacity with:
+
+```bash
+free -h
+df -h /data/elk-poc
+```
+
+### Swap is active
+
+Inspect rather than immediately disabling it:
+
+```bash
+swapon --show
+free -h
+```
+
+This is a warning for the POC. After deployment, use `sudo podman stats --no-stream` to confirm the containers remain within their limits. If normal operation consumes swap, reduce the workload or add memory. Coordinate any `/etc/fstab` change with the VM owner.
+
+### `vm.max_map_count` is below 1048576
+
+`elkctl deploy` persists and applies the required setting automatically. To apply it before deployment, create `/etc/sysctl.d/90-elk-poc.conf` containing:
+
+```text
+vm.max_map_count=1048576
+```
+
+Then run:
+
+```bash
+sudo sysctl --system
+sysctl vm.max_map_count
+```
+
+### firewalld is inactive
+
+Confirm whether this is intentional with the RHEL or network owner:
+
+```bash
+sudo systemctl status firewalld
+```
+
+Do not blindly enable firewalld on a remote VM because an incomplete ruleset can terminate SSH access. The deployment needs approved inbound TCP access to 5601, 8220, and 9200, preferably restricted to approved source networks. The framework reports firewall state but intentionally does not change firewall rules.
+
+### Elastic artifact access is not confirmed
+
+Test the same small versioned checksum file used by preflight:
+
+```bash
+curl --fail --silent --show-error --output /dev/null \
+  https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-9.4.2-linux-x86_64.tar.gz.sha512
+echo $?
+```
+
+Exit status `0` means it succeeded. If the shell does not already have approved proxy variables, add `--proxy <proxy-url>` and `--cacert /data/elk-poc/pki/proxy-ca-chain.pem`. Do not place proxy credentials in the URL.
+
 ## A service fails
 
 Inspect its journal with `elkctl logs`. Work in dependency order:

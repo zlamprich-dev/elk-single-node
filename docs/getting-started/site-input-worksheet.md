@@ -21,7 +21,7 @@ The framework already defines:
 - Ports 9200, 5601, and 8220.
 - Automatic Podman subnet allocation.
 - Fleet policy IDs and integration versions.
-- Resource limits for the planned 8-vCPU/32-GiB VM.
+- Resource limits for the planned 8-vCPU/24-GiB POC VM with at least 100 GiB free under `/data`.
 - PKI filenames under `/data/elk-poc/pki`.
 
 Run `bin/elkctl config-check` after entering the VM FQDN and proxy settings. `PENDING` PKI files may be installed next; configuration failures must be corrected first.
