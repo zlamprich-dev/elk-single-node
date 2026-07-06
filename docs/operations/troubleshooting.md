@@ -237,12 +237,32 @@ variables; it does not define a synthetic stream block.
 
 ## Fleet reports that `elk-poc-local-rhel` was not found
 
-Kibana HTTP readiness does not guarantee that Fleet startup preconfiguration
-has already materialized every agent-policy saved object. Before creating any
-package policy, the controller now checks both framework agent-policy IDs using
-the supported Fleet API and creates only a missing policy. Existing policies
-are preserved. Pull the correction and rerun deployment; do not delete Fleet
-saved objects or Elasticsearch data.
+Before creating any package policy, the controller checks both framework
+agent-policy IDs using the supported Fleet API and creates only a missing
+policy. Existing policies are preserved. Pull the correction and rerun
+deployment; do not delete Fleet saved objects or Elasticsearch data.
+
+## Fleet says the Fleet Server policy is hosted or externally managed
+
+In Fleet, `is_managed: true` means an external orchestrator such as Elastic
+Cloud or ECK owns the policy. Fleet deliberately blocks package-policy changes
+through the normal API for such a policy. It does **not** mean the policy is an
+ordinary Fleet-managed policy.
+
+The controller must add the Fleet Server integration, so it now creates both
+framework policies as ordinary API-managed policies (`is_managed: false`). The
+Kibana startup configuration defines Fleet hosts, outputs, and pinned packages,
+but does not also declare the policies. This gives each policy one owner and
+avoids a race or ownership conflict between Kibana preconfiguration and the
+controller.
+
+Pull the correction and rerun `sudo bin/elkctl deploy`. Deployment rewrites the
+rendered Kibana configuration and restarts Kibana before reconciling Fleet. If
+the failed attempt left a hosted policy with the framework's exact ID and zero
+enrolled agents, the controller removes that stale policy through Fleet's
+documented delete API and recreates it. It refuses this migration when the
+policy has an enrolled agent, because deleting it could orphan that agent. Do
+not delete Elasticsearch data, secrets, or Agent state before retrying.
 
 ## Agent has no host data
 

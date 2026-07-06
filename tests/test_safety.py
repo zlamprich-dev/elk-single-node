@@ -44,13 +44,80 @@ class SafetyTest(unittest.TestCase):
         config = Mock()
         config.url.return_value = "https://server.test.internal:5601"
         client = Mock()
-        client.request.return_value = (200, b"{}")
+        client.request.return_value = (200, b'{"item":{"is_managed":false}}')
         controller = StackController(config, Mock())
         controller._kibana_client = Mock(return_value=client)
 
         controller.ensure_agent_policy("elk-poc-local-rhel", "ELK POC Local RHEL")
 
         client.json.assert_not_called()
+
+    def test_stale_empty_hosted_policy_is_replaced(self) -> None:
+        config = Mock()
+        config.url.return_value = "https://server.test.internal:5601"
+        client = Mock()
+        client.request.return_value = (
+            200,
+            b'{"item":{"is_managed":true,"is_preconfigured":true,"agents":0}}',
+        )
+        controller = StackController(config, Mock())
+        controller._kibana_client = Mock(return_value=client)
+
+        with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+            controller.ensure_agent_policy("elk-poc-fleet-server", "ELK POC Fleet Server")
+
+        self.assertEqual(client.json.call_count, 2)
+        delete_call, create_call = client.json.call_args_list
+        self.assertTrue(delete_call.args[1].endswith("/api/fleet/agent_policies/delete"))
+        self.assertEqual(
+            delete_call.kwargs["payload"],
+            {"agentPolicyId": "elk-poc-fleet-server", "force": True},
+        )
+        self.assertTrue(create_call.args[1].endswith("/api/fleet/agent_policies"))
+
+    def test_hosted_policy_with_agents_is_not_deleted(self) -> None:
+        config = Mock()
+        config.url.return_value = "https://server.test.internal:5601"
+        client = Mock()
+        client.request.return_value = (
+            200,
+            b'{"item":{"is_managed":true,"is_preconfigured":true,"agents":1}}',
+        )
+        controller = StackController(config, Mock())
+        controller._kibana_client = Mock(return_value=client)
+
+        with self.assertRaisesRegex(Exception, "reports 1 enrolled agents"):
+            controller.ensure_agent_policy("elk-poc-fleet-server", "ELK POC Fleet Server")
+
+        client.json.assert_not_called()
+
+    def test_fleet_server_policy_is_api_managed_and_designated_for_fleet_server(self) -> None:
+        config = Mock()
+        config.url.return_value = "https://server.test.internal:5601"
+        client = Mock()
+        client.request.return_value = (404, b"")
+        controller = StackController(config, Mock())
+        controller._kibana_client = Mock(return_value=client)
+
+        with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+            controller.ensure_agent_policy(
+                "elk-poc-fleet-server",
+                "ELK POC Fleet Server",
+                fleet_server=True,
+            )
+
+        payload = client.json.call_args.kwargs["payload"]
+        self.assertIs(payload["is_managed"], False)
+        self.assertIs(payload["has_fleet_server"], True)
+        self.assertIs(payload["is_default_fleet_server"], True)
+
+    def test_kibana_does_not_preconfigure_controller_owned_agent_policies(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        kibana = (root / "deploy" / "kibana" / "kibana.yml.in").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertNotIn("xpack.fleet.agentPolicies", kibana)
 
     def test_failed_preflight_prevents_mutation(self) -> None:
         config = Mock()

@@ -33,22 +33,4 @@ xpack.fleet.packages:
     version: "@@SYSTEM_PACKAGE_VERSION@@"
   - name: journald
     version: "@@JOURNALD_PACKAGE_VERSION@@"
-xpack.fleet.agentPolicies:
-  - id: "@@FLEET_SERVER_POLICY_ID@@"
-    name: "ELK POC Fleet Server"
-    namespace: "@@FLEET_NAMESPACE@@"
-    monitoring_enabled: [logs, metrics]
-    is_managed: true
-    is_default_fleet_server: true
-    data_output_id: elk-poc-elasticsearch-output
-    monitoring_output_id: elk-poc-elasticsearch-output
-    fleet_server_host_id: elk-poc-fleet-host
-  - id: "@@LOCAL_AGENT_POLICY_ID@@"
-    name: "ELK POC Local RHEL"
-    namespace: "@@FLEET_NAMESPACE@@"
-    monitoring_enabled: [logs, metrics]
-    is_managed: false
-    data_output_id: elk-poc-elasticsearch-output
-    monitoring_output_id: elk-poc-elasticsearch-output
-    fleet_server_host_id: elk-poc-fleet-host
 @@REGISTRY_PROXY_SETTING@@

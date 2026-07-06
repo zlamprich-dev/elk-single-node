@@ -268,14 +268,34 @@ class StackController:
         """Ensure a framework-owned Fleet agent policy exists before it is referenced."""
         headers = {"kbn-xsrf": "elkctl", "Content-Type": "application/json"}
         client = self._kibana_client()
-        status, _ = client.request(
+        status, body = client.request(
             "GET",
             f"{self.config.url('kibana')}/api/fleet/agent_policies/{policy_id}",
             headers=headers,
             allow_status=frozenset({404}),
         )
         if status == 200:
-            return
+            try:
+                item = json.loads(body).get("item", {})
+            except (json.JSONDecodeError, AttributeError) as exc:
+                raise ElkctlError(
+                    f"Fleet returned an invalid agent policy response for {policy_id}"
+                ) from exc
+            if not item.get("is_managed") and not item.get("is_preconfigured"):
+                return
+            agents = item.get("agents", 0)
+            if not isinstance(agents, int) or agents != 0:
+                raise ElkctlError(
+                    f"cannot migrate hosted Fleet policy {policy_id}: "
+                    f"it reports {agents!r} enrolled agents"
+                )
+            client.json(
+                "POST",
+                f"{self.config.url('kibana')}/api/fleet/agent_policies/delete",
+                headers=headers,
+                payload={"agentPolicyId": policy_id, "force": True},
+            )
+            log(f"removed stale hosted Fleet agent policy: {policy_id}")
         payload: dict[str, object] = {
             "id": policy_id,
             "name": name,
@@ -285,7 +305,10 @@ class StackController:
             "data_output_id": "elk-poc-elasticsearch-output",
             "monitoring_output_id": "elk-poc-elasticsearch-output",
             "fleet_server_host_id": "elk-poc-fleet-host",
-            "is_managed": fleet_server,
+            # The controller attaches integrations to these policies through the
+            # Fleet API.  A managed/hosted policy is read-only to that API and is
+            # reserved for an external orchestrator such as Elastic Cloud or ECK.
+            "is_managed": False,
         }
         if fleet_server:
             payload.update(
