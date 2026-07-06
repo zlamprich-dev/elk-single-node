@@ -5,6 +5,7 @@ import io
 import json
 from pathlib import Path
 import tempfile
+from typing import Callable
 import unittest
 from unittest.mock import Mock, patch
 
@@ -118,6 +119,38 @@ class SafetyTest(unittest.TestCase):
         )
 
         self.assertNotIn("xpack.fleet.agentPolicies", kibana)
+
+    def test_fleet_setup_retries_temporary_license_unavailability(self) -> None:
+        config = Mock()
+        config.url.return_value = "https://server.test.internal:5601"
+        client = Mock()
+        client.json.side_effect = [
+            (503, {"message": "License information could not be obtained"}),
+            (200, {"isInitialized": True, "nonFatalErrors": []}),
+        ]
+        controller = StackController(config, Mock())
+        controller._kibana_client = Mock(return_value=client)
+
+        def exercise_wait(label: str, check: Callable[[], bool], attempts: int) -> None:
+            self.assertEqual(label, "Fleet setup")
+            self.assertEqual(attempts, 60)
+            self.assertFalse(check())
+            self.assertTrue(check())
+
+        controller.wait_for = Mock(side_effect=exercise_wait)
+        controller.initialize_fleet()
+
+        self.assertEqual(client.json.call_count, 2)
+        for call in client.json.call_args_list:
+            self.assertTrue(call.args[1].endswith("/api/fleet/agents/setup"))
+            self.assertEqual(call.kwargs["allow_status"], frozenset({503}))
+
+    def test_kibana_readiness_does_not_accept_degraded_status(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        controller = (root / "src" / "elkctl" / "stack.py").read_text(encoding="utf-8")
+
+        self.assertNotIn('level in {"available", "degraded"}', controller)
+        self.assertIn('overall == "available" and elasticsearch == "available"', controller)
 
     def test_failed_preflight_prevents_mutation(self) -> None:
         config = Mock()

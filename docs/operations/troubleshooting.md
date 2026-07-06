@@ -264,6 +264,22 @@ documented delete API and recreates it. It refuses this migration when the
 policy has an enrolled agent, because deleting it could orphan that agent. Do
 not delete Elasticsearch data, secrets, or Agent state before retrying.
 
+## Fleet setup returns HTTP 503 because license information is unavailable
+
+Kibana can answer HTTPS requests while still reporting a degraded state and
+waiting for Elasticsearch-backed services such as licensing. Starting Fleet at
+that point can return `License information could not be obtained from
+Elasticsearch` from the setup API.
+
+The deployment now waits for both Kibana's overall status and its core
+Elasticsearch status to be `available`. It then calls the current
+`POST /api/fleet/agents/setup` endpoint, which Elastic documents as idempotent,
+and retries only a temporary HTTP 503 response for up to five minutes. Other
+HTTP errors remain immediate failures so configuration defects are not hidden.
+
+Pull the correction and rerun `sudo bin/elkctl deploy`. Do not remove data,
+secrets, certificates, or Fleet objects for this temporary readiness failure.
+
 ## Agent has no host data
 
 Check Agent logs and SELinux denials:

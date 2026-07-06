@@ -231,10 +231,32 @@ class StackController:
             status, payload = self._kibana_client().json(
                 "GET", f"{self.config.url('kibana')}/api/status"
             )
-            level = payload.get("status", {}).get("overall", {}).get("level")
-            return status == 200 and level in {"available", "degraded"}
+            kibana_status = payload.get("status", {})
+            overall = kibana_status.get("overall", {}).get("level")
+            elasticsearch = kibana_status.get("core", {}).get("elasticsearch", {}).get("level")
+            return status == 200 and overall == "available" and elasticsearch == "available"
 
         self.wait_for("Kibana", ready, 90)
+
+    def initialize_fleet(self) -> None:
+        """Wait until Kibana can complete Elasticsearch-backed Fleet setup."""
+        headers = {"kbn-xsrf": "elkctl", "Content-Type": "application/json"}
+
+        def setup_ready() -> bool:
+            status, payload = self._kibana_client().json(
+                "POST",
+                f"{self.config.url('kibana')}/api/fleet/agents/setup",
+                headers=headers,
+                payload={},
+                allow_status=frozenset({503}),
+            )
+            return (
+                status == 200
+                and isinstance(payload, dict)
+                and payload.get("isInitialized") is True
+            )
+
+        self.wait_for("Fleet setup", setup_ready, 60)
 
     def ensure_package_policy(self, policy_id: str, path: Path) -> None:
         headers = {"kbn-xsrf": "elkctl", "Content-Type": "application/json"}
@@ -379,10 +401,7 @@ class StackController:
         )
 
     def bootstrap_fleet(self) -> None:
-        headers = {"kbn-xsrf": "elkctl", "Content-Type": "application/json"}
-        self._kibana_client().json(
-            "POST", f"{self.config.url('kibana')}/api/fleet/setup", headers=headers, payload={}
-        )
+        self.initialize_fleet()
         self.ensure_agent_policy(
             FLEET_SERVER_POLICY_ID,
             "ELK POC Fleet Server",
