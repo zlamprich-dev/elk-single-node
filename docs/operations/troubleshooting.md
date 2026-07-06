@@ -280,6 +280,25 @@ HTTP errors remain immediate failures so configuration defects are not hidden.
 Pull the correction and rerun `sudo bin/elkctl deploy`. Do not remove data,
 secrets, certificates, or Fleet objects for this temporary readiness failure.
 
+## Fleet says per-policy output assignment requires Platinum
+
+The Basic license supports Fleet, Elastic Agent, Fleet Server, the System and
+Journald integrations, and a global default Elasticsearch output. It does not
+support explicitly selecting an output separately on each agent policy.
+
+Earlier controller payloads included `data_output_id` and
+`monitoring_output_id`. Although both values selected the same default
+Elasticsearch output, their presence requested Fleet's licensed per-policy
+output-assignment feature and caused the HTTP 400 response.
+
+The controller now omits those fields. Both agent policies automatically
+inherit `elk-poc-elasticsearch-output`, which `kibana.yml` marks as the global
+default for integration data and Agent monitoring. This preserves the intended
+single-cluster data flow without requiring Platinum or Enterprise.
+
+Pull the correction and rerun `sudo bin/elkctl deploy`. No license upgrade,
+trial activation, data deletion, or secret regeneration is required.
+
 ## Agent has no host data
 
 Check Agent logs and SELinux denials:

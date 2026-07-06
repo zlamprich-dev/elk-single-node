@@ -3,6 +3,7 @@
 - [ ] `elkctl preflight` returns zero failures.
 - [ ] Elasticsearch, Kibana, Fleet Server, and the Agent services are active.
 - [ ] Elasticsearch cluster health is green or has an explained transient warning.
+- [ ] Elasticsearch reports a Basic license; no trial or paid license is required.
 - [ ] Kibana opens over HTTPS without bypassing certificate validation.
 - [ ] Fleet Server and the local Agent report healthy.
 - [ ] System metrics appear in Kibana.

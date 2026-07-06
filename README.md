@@ -9,6 +9,10 @@ This repository deploys Elastic Stack **9.4.2** on one RHEL 9 VM with rootful Po
 
 The objective is to demonstrate searchable host telemetry, Fleet management, and Kibana dashboards—not to provide a production platform. The VM and its disk remain a single failure domain.
 
+The POC uses Elastic's free **Basic** self-managed license. Agent policies
+inherit one global default Elasticsearch output; the framework does not request
+paid per-policy or per-integration output assignment.
+
 ## What the POC demonstrates
 
 ```text

@@ -39,6 +39,8 @@ class SafetyTest(unittest.TestCase):
         self.assertEqual(payload["id"], "elk-poc-local-rhel")
         self.assertEqual(payload["namespace"], "elk_poc")
         self.assertEqual(payload["is_managed"], False)
+        self.assertNotIn("data_output_id", payload)
+        self.assertNotIn("monitoring_output_id", payload)
         client.json.assert_called_once()
 
     def test_existing_agent_policy_is_not_recreated(self) -> None:
@@ -111,6 +113,8 @@ class SafetyTest(unittest.TestCase):
         self.assertIs(payload["is_managed"], False)
         self.assertIs(payload["has_fleet_server"], True)
         self.assertIs(payload["is_default_fleet_server"], True)
+        self.assertNotIn("data_output_id", payload)
+        self.assertNotIn("monitoring_output_id", payload)
 
     def test_kibana_does_not_preconfigure_controller_owned_agent_policies(self) -> None:
         root = Path(__file__).resolve().parents[1]
@@ -151,6 +155,19 @@ class SafetyTest(unittest.TestCase):
 
         self.assertNotIn('level in {"available", "degraded"}', controller)
         self.assertIn('overall == "available" and elasticsearch == "available"', controller)
+
+    def test_deployment_declares_basic_license_and_global_default_output(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        elasticsearch = (
+            root / "deploy" / "elasticsearch" / "elasticsearch.yml.in"
+        ).read_text(encoding="utf-8")
+        kibana = (root / "deploy" / "kibana" / "kibana.yml.in").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("xpack.license.self_generated.type: basic", elasticsearch)
+        self.assertIn("is_default: true", kibana)
+        self.assertIn("is_default_monitoring: true", kibana)
 
     def test_failed_preflight_prevents_mutation(self) -> None:
         config = Mock()

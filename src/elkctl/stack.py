@@ -324,8 +324,10 @@ class StackController:
             "namespace": FLEET_NAMESPACE,
             "description": "Framework-managed policy for the ELK POC",
             "monitoring_enabled": ["logs", "metrics"],
-            "data_output_id": "elk-poc-elasticsearch-output",
-            "monitoring_output_id": "elk-poc-elasticsearch-output",
+            # Do not set data_output_id or monitoring_output_id here. Explicit
+            # per-policy output assignment requires a paid subscription. On the
+            # Basic license, policies inherit the global default data and
+            # monitoring output declared in kibana.yml.
             "fleet_server_host_id": "elk-poc-fleet-host",
             # The controller attaches integrations to these policies through the
             # Fleet API.  A managed/hosted policy is read-only to that API and is
