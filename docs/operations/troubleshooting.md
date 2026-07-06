@@ -165,6 +165,18 @@ Inspect its journal with `elkctl logs`. Work in dependency order:
 
 Do not troubleshoot Fleet while Elasticsearch or Kibana is unhealthy.
 
+## systemd says a Quadlet service is transient or generated
+
+Quadlet creates generated `.service` units, so `systemctl enable` and
+`systemctl disable` are invalid for them. Boot activation comes from the
+`[Install]` section in each `.container` source file. Manage the generated
+services with `systemctl start`, `stop`, or `restart`.
+
+If an older controller version fails while trying to enable a generated unit,
+pull the corrected repository and rerun `sudo bin/elkctl deploy`. Deployment is
+convergent: existing protected secrets, rendered files, and downloaded images
+are reused.
+
 ## Agent has no host data
 
 Check Agent logs and SELinux denials:

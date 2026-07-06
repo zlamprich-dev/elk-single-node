@@ -34,9 +34,13 @@ class StackController:
         if not hasattr(os, "geteuid") or os.geteuid() != 0:
             raise ElkctlError("this command must run as root (use sudo)")
 
-    def enable_and_restart(self, unit: str) -> None:
-        """Enable a service for boot and apply the currently rendered definition."""
-        self.runner.run(["systemctl", "enable", unit])
+    def restart_quadlet(self, unit: str) -> None:
+        """Start or restart a generated Quadlet service.
+
+        Quadlet services are transient generator output and cannot be enabled
+        with systemctl. Their source files' [Install] sections establish boot
+        activation when systemd regenerates the services.
+        """
         self.runner.run(["systemctl", "restart", unit])
 
     def secret_file(self, name: str) -> Path:
@@ -159,7 +163,7 @@ class StackController:
 
     def start_elasticsearch(self) -> None:
         self.ensure_podman_secret("elk_poc_elastic_password", self.secret_file("elastic-password"))
-        self.enable_and_restart("elk-poc-elasticsearch.service")
+        self.restart_quadlet("elk-poc-elasticsearch.service")
 
         def healthy() -> bool:
             status, payload = self._es_client().json(
@@ -231,7 +235,7 @@ class StackController:
     def start_kibana(self) -> None:
         self.create_service_token("elastic/kibana", "elk-poc", "kibana-service-token")
         self.prepare_kibana_keystore()
-        self.enable_and_restart("elk-poc-kibana.service")
+        self.restart_quadlet("elk-poc-kibana.service")
 
         def ready() -> bool:
             status, payload = self._kibana_client().json(
@@ -332,7 +336,7 @@ class StackController:
             "elastic/fleet-server", "elk-poc", "fleet-service-token"
         )
         self.ensure_podman_secret("elk_poc_fleet_service_token", fleet_token)
-        self.enable_and_restart("elk-poc-fleet-server.service")
+        self.restart_quadlet("elk-poc-fleet-server.service")
 
         def fleet_ready() -> bool:
             status, payload = self._fleet_client().json(
@@ -343,7 +347,7 @@ class StackController:
         self.wait_for("Fleet Server", fleet_ready, 90)
         enrollment = self.create_enrollment_token()
         self.ensure_podman_secret("elk_poc_local_enrollment_token", enrollment)
-        self.enable_and_restart("elk-poc-agent.service")
+        self.restart_quadlet("elk-poc-agent.service")
         self.wait_for("local monitoring Agent", self.local_agent_online, 60)
 
     def deploy(self) -> None:
@@ -459,9 +463,7 @@ class StackController:
     def destroy(self) -> None:
         self.require_root()
         for service in reversed(SERVICES):
-            self.runner.run(
-                ["systemctl", "disable", "--now", f"{service}.service"], check=False
-            )
+            self.runner.run(["systemctl", "stop", f"{service}.service"], check=False)
         unit_root = Path("/etc/containers/systemd")
         for path in [unit_root / "elk-poc.network", *unit_root.glob("elk-poc-*.container")]:
             path.unlink(missing_ok=True)

@@ -11,6 +11,16 @@ from elkctl.stack import StackController
 
 
 class SafetyTest(unittest.TestCase):
+    def test_quadlet_restart_does_not_try_to_enable_generated_unit(self) -> None:
+        runner = Mock()
+        controller = StackController(Mock(), runner)
+
+        controller.restart_quadlet("elk-poc-elasticsearch.service")
+
+        runner.run.assert_called_once_with(
+            ["systemctl", "restart", "elk-poc-elasticsearch.service"]
+        )
+
     def test_failed_preflight_prevents_mutation(self) -> None:
         config = Mock()
         runner = Mock()
@@ -36,6 +46,12 @@ class SafetyTest(unittest.TestCase):
         self.assertNotIn("/run/podman/podman.sock", content)
         self.assertNotIn("/var/run/docker.sock", content)
         self.assertNotIn("@@NETWORK_SUBNET@@", content)
+
+    def test_controller_does_not_enable_or_disable_generated_quadlet_services(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        content = (root / "src" / "elkctl" / "stack.py").read_text(encoding="utf-8")
+        self.assertNotIn('["systemctl", "enable"', content)
+        self.assertNotIn('["systemctl", "disable"', content)
 
 
 if __name__ == "__main__":
