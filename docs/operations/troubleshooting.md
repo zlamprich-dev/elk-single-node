@@ -203,6 +203,18 @@ repository, and rerun deployment. An old
 `runtime/config/elasticsearch/elasticsearch.keystore` file may remain on the
 host, but it is no longer mounted and does not need to be deleted.
 
+## Kibana reports an encryption-key length of zero
+
+Kibana JSON-parses values supplied to `kibana-keystore add --stdin`. The
+controller therefore sends every value as a JSON-encoded string followed by a
+newline and validates that each encryption key contains at least 32 characters
+before updating the keystore. This prevents an accepted command from producing
+an empty setting.
+
+After pulling this correction, rerun deployment. The controller uses `--force`
+to replace the empty keystore entries with the existing protected secret-file
+values; do not delete or regenerate those secret files.
+
 ## Agent has no host data
 
 Check Agent logs and SELinux denials:

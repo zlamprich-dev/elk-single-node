@@ -202,8 +202,17 @@ class StackController:
             "xpack.reporting.encryptionKey": "kibana-reporting-encryption-key",
         }
         for key, secret_name in entries.items():
+            value = self.read_secret(secret_name)
+            if key.endswith("encryptionKey") and len(value) < 32:
+                raise ElkctlError(
+                    f"protected secret {secret_name} must contain at least 32 characters"
+                )
             self._kibana_keystore(
-                "add", key, "--stdin", "--force", input_text=self.read_secret(secret_name)
+                "add",
+                key,
+                "--stdin",
+                "--force",
+                input_text=f"{json.dumps(value)}\n",
             )
         os.chmod(keystore, 0o660)
         os.chown(keystore, 1000, 0)

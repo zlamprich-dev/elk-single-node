@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from contextlib import redirect_stderr, redirect_stdout
 import io
+import json
 from pathlib import Path
+import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
@@ -72,6 +74,33 @@ class SafetyTest(unittest.TestCase):
         quadlet = root / "deploy" / "quadlet" / "elk-poc-elasticsearch.container.in"
         content = quadlet.read_text(encoding="utf-8")
         self.assertNotIn(":/usr/share/elasticsearch/config/elasticsearch.keystore", content)
+
+    def test_kibana_keystore_values_are_json_encoded_strings(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = Mock()
+            config.runtime_root = root / "runtime"
+            config.secrets_root = root / "secrets"
+            keystore = config.runtime_root / "config" / "kibana" / "kibana.keystore"
+            keystore.parent.mkdir(parents=True)
+            keystore.write_text("test", encoding="utf-8")
+            config.secrets_root.mkdir()
+            values = {
+                "kibana-service-token": "service-token-value",
+                "kibana-security-encryption-key": "s" * 32,
+                "kibana-saved-objects-encryption-key": "o" * 32,
+                "kibana-reporting-encryption-key": "r" * 32,
+            }
+            for name, value in values.items():
+                (config.secrets_root / name).write_text(value, encoding="utf-8")
+
+            controller = StackController(config, Mock())
+            controller._kibana_keystore = Mock()
+            with patch("elkctl.stack.os.chown", create=True):
+                controller.prepare_kibana_keystore()
+
+            inputs = [call.kwargs["input_text"] for call in controller._kibana_keystore.call_args_list]
+            self.assertEqual(inputs, [f"{json.dumps(value)}\n" for value in values.values()])
 
 
 if __name__ == "__main__":
