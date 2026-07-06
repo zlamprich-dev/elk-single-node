@@ -177,6 +177,18 @@ pull the corrected repository and rerun `sudo bin/elkctl deploy`. Deployment is
 convergent: existing protected secrets, rendered files, and downloaded images
 are reused.
 
+## Elasticsearch rejects `elastic_password` mode 0444
+
+Podman secret mounts default to mode `0444`, but Elasticsearch rejects password
+files readable by other users. Current Quadlet templates mount the Elasticsearch
+password as UID 1000 with mode `0400`; Fleet and Agent secrets also use mode
+`0400`.
+
+If an older rendered unit is restarting with this error, stop that unit, pull
+the corrected repository, and rerun deployment. The Podman secret itself does
+not need to be deleted or recreated because ownership and mode are consumer
+mount options in the Quadlet definition.
+
 ## Agent has no host data
 
 Check Agent logs and SELinux denials:

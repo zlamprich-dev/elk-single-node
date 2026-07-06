@@ -13,7 +13,7 @@ Volume=@@RUNTIME_ROOT@@/config/elasticsearch/elasticsearch.yml:/usr/share/elasti
 Volume=@@RUNTIME_ROOT@@/config/elasticsearch/elasticsearch.keystore:/usr/share/elasticsearch/config/elasticsearch.keystore:Z
 Volume=@@RUNTIME_ROOT@@/pki/elasticsearch:/usr/share/elasticsearch/config/certs:ro,Z
 Volume=@@RUNTIME_ROOT@@/data/elasticsearch:/usr/share/elasticsearch/data:Z
-Secret=elk_poc_elastic_password,type=mount,target=elastic_password
+Secret=elk_poc_elastic_password,type=mount,target=elastic_password,uid=1000,gid=0,mode=0400
 Environment=ELASTIC_PASSWORD_FILE=/run/secrets/elastic_password
 Environment=TZ=UTC
 Memory=@@ELASTICSEARCH_MEMORY@@

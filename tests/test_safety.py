@@ -53,6 +53,20 @@ class SafetyTest(unittest.TestCase):
         self.assertNotIn('["systemctl", "enable"', content)
         self.assertNotIn('["systemctl", "disable"', content)
 
+    def test_mounted_secrets_are_not_world_readable(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        quadlets = (root / "deploy" / "quadlet").glob("*.container.in")
+        secret_lines = [
+            line
+            for path in quadlets
+            for line in path.read_text(encoding="utf-8").splitlines()
+            if line.startswith("Secret=")
+        ]
+        self.assertEqual(len(secret_lines), 3)
+        self.assertTrue(all("mode=0400" in line for line in secret_lines))
+        elasticsearch = next(line for line in secret_lines if "elastic_password" in line)
+        self.assertIn("uid=1000", elasticsearch)
+
 
 if __name__ == "__main__":
     unittest.main()
