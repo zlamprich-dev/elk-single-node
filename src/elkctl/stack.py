@@ -11,6 +11,7 @@ from typing import Callable
 
 from .config import StackConfig
 from .constants import (
+    FLEET_NAMESPACE,
     FLEET_SERVER_POLICY_ID,
     IMAGES,
     LOCAL_AGENT_POLICY_ID,
@@ -257,6 +258,50 @@ class StackController:
         )
         log(f"created Fleet package policy: {policy_id}")
 
+    def ensure_agent_policy(
+        self,
+        policy_id: str,
+        name: str,
+        *,
+        fleet_server: bool = False,
+    ) -> None:
+        """Ensure a framework-owned Fleet agent policy exists before it is referenced."""
+        headers = {"kbn-xsrf": "elkctl", "Content-Type": "application/json"}
+        client = self._kibana_client()
+        status, _ = client.request(
+            "GET",
+            f"{self.config.url('kibana')}/api/fleet/agent_policies/{policy_id}",
+            headers=headers,
+            allow_status=frozenset({404}),
+        )
+        if status == 200:
+            return
+        payload: dict[str, object] = {
+            "id": policy_id,
+            "name": name,
+            "namespace": FLEET_NAMESPACE,
+            "description": "Framework-managed policy for the ELK POC",
+            "monitoring_enabled": ["logs", "metrics"],
+            "data_output_id": "elk-poc-elasticsearch-output",
+            "monitoring_output_id": "elk-poc-elasticsearch-output",
+            "fleet_server_host_id": "elk-poc-fleet-host",
+            "is_managed": fleet_server,
+        }
+        if fleet_server:
+            payload.update(
+                {
+                    "has_fleet_server": True,
+                    "is_default_fleet_server": True,
+                }
+            )
+        client.json(
+            "POST",
+            f"{self.config.url('kibana')}/api/fleet/agent_policies",
+            headers=headers,
+            payload=payload,
+        )
+        log(f"created Fleet agent policy: {policy_id}")
+
     def configure_single_node_templates(self) -> None:
         datasets = (
             "logs-system.auth",
@@ -314,6 +359,15 @@ class StackController:
         headers = {"kbn-xsrf": "elkctl", "Content-Type": "application/json"}
         self._kibana_client().json(
             "POST", f"{self.config.url('kibana')}/api/fleet/setup", headers=headers, payload={}
+        )
+        self.ensure_agent_policy(
+            FLEET_SERVER_POLICY_ID,
+            "ELK POC Fleet Server",
+            fleet_server=True,
+        )
+        self.ensure_agent_policy(
+            LOCAL_AGENT_POLICY_ID,
+            "ELK POC Local RHEL",
         )
         rendered = self.config.runtime_root / "config"
         self.ensure_package_policy("elk-poc-local-system", rendered / "system-package-policy.json")

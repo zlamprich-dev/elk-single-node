@@ -235,6 +235,15 @@ for their input shapes. System logs use the `system-logfile` input with
 `logs-journald` input and defines `paths` and `include_matches` directly as input
 variables; it does not define a synthetic stream block.
 
+## Fleet reports that `elk-poc-local-rhel` was not found
+
+Kibana HTTP readiness does not guarantee that Fleet startup preconfiguration
+has already materialized every agent-policy saved object. Before creating any
+package policy, the controller now checks both framework agent-policy IDs using
+the supported Fleet API and creates only a missing policy. Existing policies
+are preserved. Pull the correction and rerun deployment; do not delete Fleet
+saved objects or Elasticsearch data.
+
 ## Agent has no host data
 
 Check Agent logs and SELinux denials:

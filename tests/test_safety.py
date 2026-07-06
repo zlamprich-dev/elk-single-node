@@ -23,6 +23,35 @@ class SafetyTest(unittest.TestCase):
             ["systemctl", "restart", "elk-poc-elasticsearch.service"]
         )
 
+    def test_missing_agent_policy_is_created_before_it_is_referenced(self) -> None:
+        config = Mock()
+        config.url.return_value = "https://server.test.internal:5601"
+        client = Mock()
+        client.request.return_value = (404, b"")
+        controller = StackController(config, Mock())
+        controller._kibana_client = Mock(return_value=client)
+
+        with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+            controller.ensure_agent_policy("elk-poc-local-rhel", "ELK POC Local RHEL")
+
+        payload = client.json.call_args.kwargs["payload"]
+        self.assertEqual(payload["id"], "elk-poc-local-rhel")
+        self.assertEqual(payload["namespace"], "elk_poc")
+        self.assertEqual(payload["is_managed"], False)
+        client.json.assert_called_once()
+
+    def test_existing_agent_policy_is_not_recreated(self) -> None:
+        config = Mock()
+        config.url.return_value = "https://server.test.internal:5601"
+        client = Mock()
+        client.request.return_value = (200, b"{}")
+        controller = StackController(config, Mock())
+        controller._kibana_client = Mock(return_value=client)
+
+        controller.ensure_agent_policy("elk-poc-local-rhel", "ELK POC Local RHEL")
+
+        client.json.assert_not_called()
+
     def test_failed_preflight_prevents_mutation(self) -> None:
         config = Mock()
         runner = Mock()
