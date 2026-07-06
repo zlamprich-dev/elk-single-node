@@ -69,6 +69,22 @@ class RenderTest(unittest.TestCase):
         self.assertEqual(content.count("HttpProxy=false"), 4)
         self.assertEqual(content.count("Environment=no_proxy=@@NO_PROXY@@"), 3)
 
+    def test_system_policy_uses_exact_package_variable_name(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        path = root / "deploy" / "fleet" / "system-package-policy.json.in"
+        policy = json.loads(
+            render_text(
+                path.read_text(encoding="utf-8"),
+                {
+                    "FLEET_NAMESPACE": "elk_poc",
+                    "LOCAL_AGENT_POLICY_ID": "elk-poc-local-rhel",
+                    "SYSTEM_PACKAGE_VERSION": "2.20.0",
+                },
+            )
+        )
+        variables = policy["inputs"]["system-system/metrics"]["vars"]
+        self.assertEqual(variables, {"system.hostfs": "/hostfs"})
+
 
 if __name__ == "__main__":
     unittest.main()

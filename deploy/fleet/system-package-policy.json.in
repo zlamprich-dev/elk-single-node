@@ -8,7 +8,7 @@
   "inputs": {
     "system-system/metrics": {
       "enabled": true,
-      "vars": { "[system.hostfs]": "/hostfs" },
+      "vars": { "system.hostfs": "/hostfs" },
       "streams": {
         "[system.core]": { "enabled": true, "vars": { "period": "10s" } },
         "[system.cpu]": { "enabled": true, "vars": { "period": "10s" } },

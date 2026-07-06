@@ -217,6 +217,17 @@ After pulling this correction, rerun deployment. The controller uses `--force`
 to replace the empty keystore entries with the existing protected secret-file
 values; do not delete or regenerate those secret files.
 
+## Fleet rejects `Variable system-system/metrics:[system.hostfs] not found`
+
+System integration 2.20.0 defines the input variable as `system.hostfs`. Square
+brackets are part of the simplified API's stream-selector keys, but they must
+not be added to variable names. The current System package-policy template uses
+the exact variable name and sets it to `/hostfs` for the containerized Agent.
+
+This HTTP 400 response occurs before Fleet creates the package policy. Pull the
+corrected template and rerun deployment; no Fleet object or secret needs to be
+removed.
+
 ## Agent has no host data
 
 Check Agent logs and SELinux denials:
