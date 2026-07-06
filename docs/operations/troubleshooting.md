@@ -207,9 +207,11 @@ host, but it is no longer mounted and does not need to be deleted.
 
 Kibana JSON-parses values supplied to `kibana-keystore add --stdin`. The
 controller therefore sends every value as a JSON-encoded string followed by a
-newline and validates that each encryption key contains at least 32 characters
-before updating the keystore. This prevents an accepted command from producing
-an empty setting.
+newline, runs the temporary Podman container with `--interactive` so the pipe is
+connected to container stdin, and validates that each encryption key contains
+at least 32 characters before updating the keystore. Without `--interactive`,
+Podman starts the command with empty stdin even though the host process supplied
+input.
 
 After pulling this correction, rerun deployment. The controller uses `--force`
 to replace the empty keystore entries with the existing protected secret-file

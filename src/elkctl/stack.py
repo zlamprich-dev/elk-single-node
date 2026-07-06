@@ -172,11 +172,12 @@ class StackController:
     def _kibana_keystore(self, *arguments: str, input_text: str | None = None) -> None:
         config_dir = self.config.runtime_root / "config" / "kibana"
         cert_dir = self.config.runtime_root / "pki" / "kibana"
-        self.runner.run(
+        podman_arguments: list[str | Path] = ["podman", "run", "--rm"]
+        if input_text is not None:
+            # Podman does not connect the pipe to container stdin without -i.
+            podman_arguments.append("--interactive")
+        podman_arguments.extend(
             [
-                "podman",
-                "run",
-                "--rm",
                 "--user",
                 "0",
                 "--entrypoint",
@@ -187,7 +188,10 @@ class StackController:
                 f"{cert_dir}:/usr/share/kibana/config/certs:ro,Z",
                 IMAGES["kibana"],
                 *arguments,
-            ],
+            ]
+        )
+        self.runner.run(
+            podman_arguments,
             input_text=input_text,
         )
 

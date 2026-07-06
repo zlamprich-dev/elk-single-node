@@ -94,13 +94,15 @@ class SafetyTest(unittest.TestCase):
             for name, value in values.items():
                 (config.secrets_root / name).write_text(value, encoding="utf-8")
 
-            controller = StackController(config, Mock())
-            controller._kibana_keystore = Mock()
+            runner = Mock()
+            controller = StackController(config, runner)
             with patch("elkctl.stack.os.chown", create=True):
                 controller.prepare_kibana_keystore()
 
-            inputs = [call.kwargs["input_text"] for call in controller._kibana_keystore.call_args_list]
+            inputs = [call.kwargs["input_text"] for call in runner.run.call_args_list]
             self.assertEqual(inputs, [f"{json.dumps(value)}\n" for value in values.values()])
+            for call in runner.run.call_args_list:
+                self.assertIn("--interactive", call.args[0])
 
 
 if __name__ == "__main__":
