@@ -109,30 +109,6 @@ class StackController:
                 timeout=600,
             )
 
-    def prepare_elasticsearch_keystore(self) -> None:
-        output = self.config.runtime_root / "config" / "elasticsearch"
-        keystore = output / "elasticsearch.keystore"
-        if not keystore.is_file():
-            self.runner.run(
-                [
-                    "podman",
-                    "run",
-                    "--rm",
-                    "--user",
-                    "0",
-                    "-e",
-                    "ES_PATH_CONF=/output",
-                    "--entrypoint",
-                    "/usr/share/elasticsearch/bin/elasticsearch-keystore",
-                    "-v",
-                    f"{output}:/output:Z",
-                    IMAGES["elasticsearch"],
-                    "create",
-                ]
-            )
-        os.chmod(keystore, 0o660)
-        os.chown(keystore, 1000, 0)
-
     def _es_client(self) -> HttpClient:
         return HttpClient(
             self.config.runtime_root / "pki" / "service-ca-chain.pem",
@@ -361,7 +337,6 @@ class StackController:
         self.ensure_initial_secrets()
         render_all(self.config)
         self.pull_images()
-        self.prepare_elasticsearch_keystore()
         install_quadlets(self.config, self.runner)
         self.start_elasticsearch()
         self.start_kibana()

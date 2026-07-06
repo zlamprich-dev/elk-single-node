@@ -189,6 +189,20 @@ the corrected repository, and rerun deployment. The Podman secret itself does
 not need to be deleted or recreated because ownership and mode are consumer
 mount options in the Quadlet definition.
 
+## Elasticsearch reports `elasticsearch.keystore: Device or resource busy`
+
+Elasticsearch updates its keystore by creating `elasticsearch.keystore.tmp` and
+atomically replacing the original file. A directly bind-mounted keystore cannot
+be replaced. The current POC does not add custom secure settings to that
+keystore, so it uses the image's automatically generated keystore and does not
+bind-mount a host keystore file. The bootstrap password remains protected in a
+mode-`0400` Podman secret.
+
+If an older unit is restarting with this error, stop it, pull the corrected
+repository, and rerun deployment. An old
+`runtime/config/elasticsearch/elasticsearch.keystore` file may remain on the
+host, but it is no longer mounted and does not need to be deleted.
+
 ## Agent has no host data
 
 Check Agent logs and SELinux denials:

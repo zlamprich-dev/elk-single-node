@@ -10,7 +10,6 @@ HttpProxy=false
 Network=elk-poc.network
 PublishPort=@@BIND_ADDRESS@@:@@ELASTICSEARCH_PORT@@:9200
 Volume=@@RUNTIME_ROOT@@/config/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,Z
-Volume=@@RUNTIME_ROOT@@/config/elasticsearch/elasticsearch.keystore:/usr/share/elasticsearch/config/elasticsearch.keystore:Z
 Volume=@@RUNTIME_ROOT@@/pki/elasticsearch:/usr/share/elasticsearch/config/certs:ro,Z
 Volume=@@RUNTIME_ROOT@@/data/elasticsearch:/usr/share/elasticsearch/data:Z
 Secret=elk_poc_elastic_password,type=mount,target=elastic_password,uid=1000,gid=0,mode=0400

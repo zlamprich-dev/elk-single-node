@@ -67,6 +67,12 @@ class SafetyTest(unittest.TestCase):
         elasticsearch = next(line for line in secret_lines if "elastic_password" in line)
         self.assertIn("uid=1000", elasticsearch)
 
+    def test_elasticsearch_keystore_is_not_directly_bind_mounted(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        quadlet = root / "deploy" / "quadlet" / "elk-poc-elasticsearch.container.in"
+        content = quadlet.read_text(encoding="utf-8")
+        self.assertNotIn(":/usr/share/elasticsearch/config/elasticsearch.keystore", content)
+
 
 if __name__ == "__main__":
     unittest.main()
