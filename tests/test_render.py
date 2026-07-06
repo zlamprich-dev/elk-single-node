@@ -82,8 +82,56 @@ class RenderTest(unittest.TestCase):
                 },
             )
         )
-        variables = policy["inputs"]["system-system/metrics"]["vars"]
+        inputs = policy["inputs"]
+        self.assertEqual(set(inputs), {"system-system/metrics", "system-logfile"})
+        variables = inputs["system-system/metrics"]["vars"]
         self.assertEqual(variables, {"system.hostfs": "/hostfs"})
+        self.assertEqual(
+            set(inputs["system-system/metrics"]["streams"]),
+            {
+                "system.core",
+                "system.cpu",
+                "system.diskio",
+                "system.filesystem",
+                "system.fsstat",
+                "system.load",
+                "system.memory",
+                "system.network",
+                "system.process.summary",
+                "system.uptime",
+            },
+        )
+        self.assertEqual(
+            set(inputs["system-logfile"]["streams"]),
+            {"system.auth", "system.syslog"},
+        )
+
+    def test_journald_input_policy_matches_locked_package_shape(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        path = root / "deploy" / "fleet" / "journald-package-policy.json.in"
+        policy = json.loads(
+            render_text(
+                path.read_text(encoding="utf-8"),
+                {
+                    "FLEET_NAMESPACE": "elk_poc",
+                    "LOCAL_AGENT_POLICY_ID": "elk-poc-local-rhel",
+                    "JOURNALD_PACKAGE_VERSION": "1.2.1",
+                },
+            )
+        )
+        self.assertEqual(set(policy["inputs"]), {"logs-journald"})
+        journald_input = policy["inputs"]["logs-journald"]
+        self.assertNotIn("streams", journald_input)
+        self.assertEqual(
+            set(journald_input["vars"]),
+            {"paths", "include_matches"},
+        )
+
+    def test_fleet_policy_selectors_do_not_use_literal_brackets(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        for path in (root / "deploy" / "fleet").glob("*-package-policy.json.in"):
+            content = path.read_text(encoding="utf-8")
+            self.assertNotIn('"[', content, path.name)
 
 
 if __name__ == "__main__":

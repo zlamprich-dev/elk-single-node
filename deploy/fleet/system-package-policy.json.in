@@ -10,23 +10,23 @@
       "enabled": true,
       "vars": { "system.hostfs": "/hostfs" },
       "streams": {
-        "[system.core]": { "enabled": true, "vars": { "period": "10s" } },
-        "[system.cpu]": { "enabled": true, "vars": { "period": "10s" } },
-        "[system.diskio]": { "enabled": true, "vars": { "period": "10s" } },
-        "[system.filesystem]": { "enabled": true, "vars": { "period": "1m" } },
-        "[system.fsstat]": { "enabled": true, "vars": { "period": "1m" } },
-        "[system.load]": { "enabled": true, "vars": { "period": "10s" } },
-        "[system.memory]": { "enabled": true, "vars": { "period": "10s" } },
-        "[system.network]": { "enabled": true, "vars": { "period": "10s" } },
-        "[system.process.summary]": { "enabled": true, "vars": { "period": "10s" } },
-        "[system.uptime]": { "enabled": true, "vars": { "period": "10s" } }
+        "system.core": { "enabled": true, "vars": { "period": "10s" } },
+        "system.cpu": { "enabled": true, "vars": { "period": "10s" } },
+        "system.diskio": { "enabled": true, "vars": { "period": "10s" } },
+        "system.filesystem": { "enabled": true, "vars": { "period": "1m" } },
+        "system.fsstat": { "enabled": true, "vars": { "period": "1m" } },
+        "system.load": { "enabled": true, "vars": { "period": "10s" } },
+        "system.memory": { "enabled": true, "vars": { "period": "10s" } },
+        "system.network": { "enabled": true, "vars": { "period": "10s" } },
+        "system.process.summary": { "enabled": true, "vars": { "period": "10s" } },
+        "system.uptime": { "enabled": true, "vars": { "period": "10s" } }
       }
     },
-    "system-system/logs": {
+    "system-logfile": {
       "enabled": true,
       "streams": {
-        "[system.auth]": { "enabled": true, "vars": { "paths": ["/hostfs/var/log/secure*"] } },
-        "[system.syslog]": { "enabled": true, "vars": { "paths": ["/hostfs/var/log/messages*"] } }
+        "system.auth": { "enabled": true, "vars": { "paths": ["/hostfs/var/log/secure*"] } },
+        "system.syslog": { "enabled": true, "vars": { "paths": ["/hostfs/var/log/messages*"] } }
       }
     }
   }

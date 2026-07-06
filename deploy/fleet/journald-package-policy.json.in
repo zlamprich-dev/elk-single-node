@@ -6,16 +6,11 @@
   "policy_ids": ["@@LOCAL_AGENT_POLICY_ID@@"],
   "package": { "name": "journald", "version": "@@JOURNALD_PACKAGE_VERSION@@" },
   "inputs": {
-    "journald-journald": {
+    "logs-journald": {
       "enabled": true,
-      "streams": {
-        "[journald.logs]": {
-          "enabled": true,
-          "vars": {
-            "paths": ["/hostfs/var/log/journal", "/hostfs/run/log/journal"],
-            "include_matches.match": []
-          }
-        }
+      "vars": {
+        "paths": ["/hostfs/var/log/journal", "/hostfs/run/log/journal"],
+        "include_matches": []
       }
     }
   }

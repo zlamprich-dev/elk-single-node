@@ -228,6 +228,13 @@ This HTTP 400 response occurs before Fleet creates the package policy. Pull the
 corrected template and rerun deployment; no Fleet object or secret needs to be
 removed.
 
+The same rule applies to stream selectors: use exact package stream names such
+as `system.core`, not `[system.core]`. The locked payloads have also been audited
+for their input shapes. System logs use the `system-logfile` input with
+`system.auth` and `system.syslog` streams. Journald 1.2.1 uses the
+`logs-journald` input and defines `paths` and `include_matches` directly as input
+variables; it does not define a synthetic stream block.
+
 ## Agent has no host data
 
 Check Agent logs and SELinux denials:
