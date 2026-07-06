@@ -7,11 +7,7 @@
   "package": { "name": "journald", "version": "@@JOURNALD_PACKAGE_VERSION@@" },
   "inputs": {
     "logs-journald": {
-      "enabled": true,
-      "vars": {
-        "paths": ["/hostfs/var/log/journal", "/hostfs/run/log/journal"],
-        "include_matches": []
-      }
+      "enabled": true
     }
   }
 }

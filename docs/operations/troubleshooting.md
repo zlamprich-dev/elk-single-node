@@ -232,8 +232,24 @@ The same rule applies to stream selectors: use exact package stream names such
 as `system.core`, not `[system.core]`. The locked payloads have also been audited
 for their input shapes. System logs use the `system-logfile` input with
 `system.auth` and `system.syslog` streams. Journald 1.2.1 uses the
-`logs-journald` input and defines `paths` and `include_matches` directly as input
-variables; it does not define a synthetic stream block.
+`logs-journald` input and does not define a synthetic stream block.
+
+## Fleet rejects `Variable logs-journald: paths not found`
+
+Journald 1.2.1 is an input package and is explicitly licensed for Basic. Its
+`paths` and `include_matches` settings are optional, but mapping those variables
+through Fleet's simplified package-policy selector proved version-sensitive.
+
+The POC does not need custom journal filtering, so its package policy now
+enables the input without overriding optional variables. The Agent Quadlet
+bind-mounts the host's `/var/log`, `/run/log/journal`, and `/etc/machine-id` at
+the same standard paths inside the container. Journald therefore uses its
+documented system-journal defaults. Separate `/hostfs` mounts remain available
+to the System integration.
+
+Pull the correction and rerun `sudo bin/elkctl deploy`. The rejected HTTP 400
+request does not create the Journald package policy, so no Fleet objects, data,
+or secrets need to be removed.
 
 ## Fleet reports that `elk-poc-local-rhel` was not found
 

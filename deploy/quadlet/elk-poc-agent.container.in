@@ -16,9 +16,12 @@ Volume=@@RUNTIME_ROOT@@/data/agent:/state:Z
 Volume=/proc:/hostfs/proc:ro,rslave
 Volume=/sys:/hostfs/sys:ro,rslave
 Volume=/etc/machine-id:/hostfs/etc/machine-id:ro
+Volume=/etc/machine-id:/etc/machine-id:ro
 Volume=/etc/os-release:/hostfs/etc/os-release:ro
 Volume=/var/log:/hostfs/var/log:ro,rslave
+Volume=/var/log:/var/log:ro,rslave
 Volume=/run/log/journal:/hostfs/run/log/journal:ro,rslave
+Volume=/run/log/journal:/run/log/journal:ro,rslave
 Secret=elk_poc_local_enrollment_token,type=mount,target=enrollment_token,uid=0,gid=0,mode=0400
 Entrypoint=/usr/local/bin/elk-agent-secret-entrypoint
 Environment=FLEET_ENROLL=1

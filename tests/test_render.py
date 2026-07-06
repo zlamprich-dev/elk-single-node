@@ -122,9 +122,19 @@ class RenderTest(unittest.TestCase):
         self.assertEqual(set(policy["inputs"]), {"logs-journald"})
         journald_input = policy["inputs"]["logs-journald"]
         self.assertNotIn("streams", journald_input)
-        self.assertEqual(
-            set(journald_input["vars"]),
-            {"paths", "include_matches"},
+        self.assertEqual(journald_input, {"enabled": True})
+
+    def test_agent_mounts_host_journal_at_standard_journald_paths(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        quadlet = (
+            root / "deploy" / "quadlet" / "elk-poc-agent.container.in"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("Volume=/etc/machine-id:/etc/machine-id:ro", quadlet)
+        self.assertIn("Volume=/var/log:/var/log:ro,rslave", quadlet)
+        self.assertIn(
+            "Volume=/run/log/journal:/run/log/journal:ro,rslave",
+            quadlet,
         )
 
     def test_fleet_policy_selectors_do_not_use_literal_brackets(self) -> None:
